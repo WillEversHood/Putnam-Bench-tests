@@ -1,0 +1,23 @@
+[project]
+name = "lean4_formalizer"
+version = "0.1.0"
+description = "lean4_formalizer using crewAI"
+authors = [{ name = "Your Name", email = "you@example.com" }]
+requires-python = ">=3.10,<3.14"
+dependencies = [
+    "crewai[tools]>=0.165.1,<1.0.0"
+]
+
+[project.scripts]
+lean4_formalizer = "lean4_formalizer.main:run"
+run_crew = "lean4_formalizer.main:run"
+train = "lean4_formalizer.main:train"
+replay = "lean4_formalizer.main:replay"
+test = "lean4_formalizer.main:test"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.crewai]
+type = "crew"

@@ -1,0 +1,17 @@
+research_task:
+  description: >
+    Conduct a thorough research about {topic}
+    Make sure you find any interesting and relevant information given
+    on the internet. Focus on lean4 proof libraries
+  expected_output: >
+    A list of the best strategies, where to find them how to use them, correct syntax, etc... about {topic}
+  agent: '1'
+
+reporting_task:
+  description: >
+    Review the research and use it to craft a full proof in lean4 with correct syntax and only mathlib as a dependency, so that it may be directly checked via lean's
+    autoverification features.
+  expected_output: >
+    A markdoown file and no text. The markdown file should contain a syntactically correct lean4 proof using only mathlib depndencies to solve the given problem.
+  agent: '2'
+  
