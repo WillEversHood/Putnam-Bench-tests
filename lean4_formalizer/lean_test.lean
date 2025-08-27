@@ -1,86 +1,23 @@
-import Mathlib.Data.Set.Finite
-import Mathlib.Data.Set.Card
-import Mathlib.Topology.MetricSpace.Convex
-import Mathlib.LinearAlgebra.AffineSpace.Midpoint
+import Mathlib.Data.Real.Basic
+import Mathlib.Geometry.Euclidean.Basic
+import Mathlib.Data.Set.Basic
+import Mathlib.Data.Finset.Basic
+import Mathlib.Analysis.Convex.Basic
+import Mathlib.Tactic
 
+open Real
 open Set
-open Convex
-open Affine
-open scoped BigOperators
+open EuclideanSpace
+open FiniteDimensional
 
-/--
-Given five points in a plane, no three of which lie on a straight line, show that some four of these points form the vertices of a convex quadrilateral.
--/
+-- Define Collinearity
+def Collinear (V : Type*) [AddCommGroup V] [Module ℝ V] (s : Set V) : Prop :=
+  ∃ (x y z : V), x ∈ s ∧ y ∈ s ∧ z ∈ s ∧ x ≠ y ∧ x ≠ z ∧ y ≠ z ∧
+   ∃ (a b c : ℝ), a + b + c = 1 ∧ a • x + b • y + c • z = 0
+
 theorem putnam_1962_a1
-(S : Set (ℝ × ℝ))
-(hS : S.ncard = 5)
-(hnoncol : ∀ s ⊆ S, s.ncard = 3 → ¬Collinear ℝ s)
-: ∃ T ⊆ S, T.ncard = 4 ∧ ¬∃ t ∈ T, t ∈ convexHull ℝ (T \ {t}) :=
-by
-  -- Consider the convex hull of S
-  let C := convexHull ℝ S
-
-  -- Case 1: Some point of S lies in the interior of the convex hull of the other points.
-  by_cases h_interior : ∃ p ∈ S, p ∈ convexHull ℝ (S \ {p})
-  · rcases h_interior with ⟨p, hpS, hp_in_hull⟩
-    -- Remove this point.  Then S \ {p} has cardinality 4.
-    let T := S \ {p}
-    have hT : T ⊆ S := Set.diff_subset T S
-    have hTcard : T.ncard = 4 := by
-      rw [ncard_diff_singleton hpS]
-      exact hS.symm.trans (Nat.sub_one 5).symm
-
-    -- Now consider whether T forms a convex quadrilateral.
-    by_cases h_convex : ∃ q ∈ T, q ∈ convexHull ℝ (T \ {q})
-    · rcases h_convex with ⟨q, hqT, hq_in_hull⟩
-      -- Remove this point. Then T \ {q} has cardinality 3.
-      let U := T \ {q}
-      have hU : U ⊆ T := Set.diff_subset U T
-      have hUcard : U.ncard = 3 := by
-        rw [ncard_diff_singleton hqT]
-        exact hTcard.symm.trans (Nat.sub_one 4).symm
-
-      -- Remove another point.
-      rcases Set.exists_mem_ne U with ⟨r, hrU, hr_ne_q⟩
-      let V := U \ {r}
-      have hV : V ⊆ U := Set.diff_subset V U
-      have hVcard : V.ncard = 2 := by
-        rw [ncard_diff_singleton hrU]
-        exact hUcard.symm.trans (Nat.sub_one 3).symm
-
-      -- Remove the last point.
-      rcases Set.exists_mem_ne V with ⟨s, hsV, hs_ne_r⟩
-      let W := V \ {s}
-      have hW : W ⊆ V := Set.diff_subset W V
-      have hWcard : W.ncard = 1 := by
-        rw [ncard_diff_singleton hsV]
-        exact hVcard.symm.trans (Nat.sub_one 2).symm
-
-      rcases W.exists_mem with ⟨t, htW⟩
-      -- Add any three points in S, they cannot be collinear
-      use insert p (insert q (insert r {s}))
-      have hcard: (insert p (insert q (insert r {s}))).ncard = 4 := by
-        simp
-        rw [ncard_insert_of_not_mem]
-        have h1 : q ∉ {s} := by intro h; apply hr_ne_q; rw[h]
-        simp
-        rw [ncard_insert_of_not_mem]
-        have h2 : r ∉ insert q {s} := by intro h; apply hr_ne_q; rw[h]; cases h; contradiction
-        simp
-        rw [ncard_insert_of_not_mem]
-        have h3 : p ∉ insert q (insert r {s}) := by sorry
-        simp
-
-      -- This is the degenerate case, which is impossible.
-      sorry
-    · -- Otherwise T forms a convex quadrilateral
-      use T
-      exact And.intro hTcard h_convex
-  · -- Case 2: All points of S lie on the boundary of the convex hull of S.
-    push_neg at h_interior
-    -- Then the convex hull of S is a convex pentagon.
-    -- Any four points of S form a convex quadrilateral.
-    use S.chooseNcard (Nat.sub_lt hS.out (by norm_num))
-    have hT : (S.chooseNcard (Nat.sub_lt hS.out (by norm_num))) ⊆ S := Set.chooseNcard_subset _ _
-    have hTcard : (S.chooseNcard (Nat.sub_lt hS.out (by norm_num))).ncard = 4 := Set.chooseNcard_ncard _ _
-    exact And.intro hTcard sorry
+(S : Set (EuclideanSpace ℝ (Fin 2)))
+(hS : Nat.card S = 5)
+(hnoncol : ∀ s ⊆ S, Nat.card s = 3 → ¬Collinear ℝ s)
+: ∃ T ⊆ S, Nat.card T = 4 ∧ ¬∃ t ∈ T, t ∈ convexHull ℝ (T \ {t}) :=
+sorry

@@ -1,4 +1,3 @@
-```lean
 import Mathlib.Data.Real.Basic
 import Mathlib.Analysis.Calculus.Deriv
 import Mathlib.Data.Set.Basic
@@ -145,4 +144,3 @@ theorem putnam_2023_a3
     constructor
     sorry
   sorry
-```

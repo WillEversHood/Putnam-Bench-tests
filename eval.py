@@ -1,7 +1,8 @@
 import os 
-
+import sys
 def lean_string():
-    lean_file = "lean4/src/putnam_1962_a1.lean"
+    lean_file = "src/"
+    lean_file = lean_file + sys.argv[1]
 
     with open(lean_file, "r", encoding="utf-8") as f:
         lean_code = f.read()
