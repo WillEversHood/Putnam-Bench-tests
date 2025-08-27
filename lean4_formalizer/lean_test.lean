@@ -1,4 +1,3 @@
-```lean
 import Mathlib.Data.Set.Finite
 import Mathlib.Data.Set.Card
 import Mathlib.Topology.MetricSpace.Convex
@@ -85,4 +84,3 @@ by
     have hT : (S.chooseNcard (Nat.sub_lt hS.out (by norm_num))) ⊆ S := Set.chooseNcard_subset _ _
     have hTcard : (S.chooseNcard (Nat.sub_lt hS.out (by norm_num))).ncard = 4 := Set.chooseNcard_ncard _ _
     exact And.intro hTcard sorry
-```
