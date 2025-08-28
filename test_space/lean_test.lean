@@ -1,183 +1,123 @@
-import Mathlib.Analysis.Calculus.Deriv
-import Mathlib.Analysis.SpecialFunctions.Trigonometric
-import Mathlib.Analysis.SpecialFunctions.Hyperbolic
-import Mathlib.Data.Set.Basic
-import Mathlib.Topology.Basic
-import Mathlib.Topology.ContinuousFunction.Basic
+import Mathlib.Analysis.Convex.Hull
+import Mathlib.Data.Set.Finite
+import Mathlib.Geometry.Euclidean.Basic
+import Mathlib.LinearAlgebra.Matrix.Determinant
+import Mathlib.Topology.MetricSpace.Basic
+import Mathlib.Analysis.NormedSpace.EuclideanProduct
 
 open Real
 open Set
+open Function
+open FiniteSet
+open Matrix
+open BigOperators
+open Classical
+open EuclideanGeometry
+open Affine
 
-def putnam_1963_b3_solution : Set (ℝ → ℝ) :=
-  {f | ∃ (A : ℝ) (k : ℝ), ∀ u : ℝ, f u = A * Real.sinh (k * u)} ∪
-  {f | ∃ (A : ℝ), ∀ u : ℝ, f u = A * u} ∪
-  {f | ∃ (A : ℝ) (k : ℝ), ∀ u : ℝ, f u = A * Real.sin (k * u)}
+-- Define the problem's core assumptions
+variable {S : Set (ℝ × ℝ)} (hS : S.ncard = 5)
+variable (hnoncol : ∀ s ⊆ S, s.ncard = 3 → ¬Collinear ℝ s)
 
-theorem putnam_1963_b3
-    (f : ℝ → ℝ) :
-    f ∈ putnam_1963_b3_solution ↔
-      (ContDiff ℝ 2 f ∧
-      ∀ x y : ℝ, (f x) ^ 2 - (f y) ^ 2 = f (x + y) * f (x - y)) :=
+-- Define collinearity (using determinant)
+def Collinear (R : Type*) [Field R] (s : Set (R × R)) : Prop :=
+  ∃ a b c : R × R, s = {a, b, c} ∧ det (Matrix.ofRows ![
+    ![a.1, a.2, 1],
+    ![b.1, b.2, 1],
+    ![c.1, c.2, 1]
+  ]) = 0
+
+lemma not_collinear_iff {R : Type*} [Field R] {a b c : R × R} :
+  ¬ Collinear R {a, b, c} ↔ det (Matrix.ofRows ![
+    ![a.1, a.2, 1],
+    ![b.1, b.2, 1],
+    ![c.1, c.2, 1]
+  ]) ≠ 0 := by
+  unfold Collinear
+  simp
+
+-- Define the property of forming a convex quadrilateral
+def IsConvexQuadrilateral (T : Set (ℝ × ℝ)) : Prop :=
+  T.ncard = 4 ∧ ¬∃ t ∈ T, t ∈ convexHull ℝ (T \ {t})
+
+theorem putnam_1962_a1 : ∃ T ⊆ S, IsConvexQuadrilateral T :=
   by
-  constructor
-  -- (⇒)
-  · intro hf
-    constructor
-    · -- ContDiff ℝ 2 f
-      cases hf
-      case inl hAksinh =>
-        rcases hAksinh with ⟨A, k, hf⟩
-        have hf' : f = fun u => A * Real.sinh (k * u) := by ext u; exact hf u
-        rw [hf']
-        exact ContDiff.const_mul (ContDiff.sinh (ContDiff.const_mul contDiff_id (ContDiff.const k)))
+  -- Begin by introducing the existential quantifier
+  have hfinite : S.Finite := Set.finite_of_card_eq_nat hS
+  --let hull := convexHull ℝ S
+  have hSnonempty : Nonempty S := by
+    cases hS with n heq
+    exists (Classical.arbitrary S)
+    cases n
+    · contradiction
+    · apply Set.exists_of_finite_nonempty hfinite
 
-      case inr hrest =>
-        cases hrest
-        case inl hAu =>
-          rcases hAu with ⟨A, hf⟩
-          have hf' : f = fun u => A * u := by ext u; exact hf u
-          rw [hf']
-          exact ContDiff.const_mul contDiff_id (ContDiff.const A)
-        case inr hAksin =>
-          rcases hAksin with ⟨A, k, hf⟩
-          have hf' : f = fun u => A * Real.sin (k * u) := by ext u; exact hf u
-          rw [hf']
-          exact ContDiff.const_mul (ContDiff.sin (ContDiff.const_mul contDiff_id (ContDiff.const k)))
-    · -- ∀ x y : ℝ, (f x) ^ 2 - (f y) ^ 2 = f (x + y) * f (x - y)
-      intro x y
-      cases hf
-      case inl hAksinh =>
-        rcases hAksinh with ⟨A, k, hf⟩
-        simp [hf x, hf y, hf (x+y), hf (x-y), Real.sinh]
-        have : (A * Real.sinh (k * x)) ^ 2 - (A * Real.sinh (k * y)) ^ 2 = A^2 * (Real.sinh (k * x) ^ 2 - Real.sinh (k * y) ^ 2) := by ring
-        rw [this]
-        have : (A * Real.sinh (k * (x + y))) * (A * Real.sinh (k * (x - y))) = A^2 * (Real.sinh (k * (x + y)) * Real.sinh (k * (x - y))) := by ring
-        rw [this]
-        have : Real.sinh (k * (x + y)) * Real.sinh (k * (x - y)) = Real.sinh (k * x + k * y) * Real.sinh (k * x - k * y) := by ring
-        rw [this]
-        rw [Real.sinh_add]
-        rw [Real.sinh_sub]
-        ring
-      case inr hrest =>
-        cases hrest
-        case inl hAu =>
-          rcases hAu with ⟨A, hf⟩
-          simp [hf x, hf y, hf (x+y), hf (x-y)]
-          ring
-        case inr hAksin =>
-          rcases hAksin with ⟨A, k, hf⟩
-          simp [hf x, hf y, hf (x+y), hf (x-y)]
-          have : (A * Real.sin (k * x)) ^ 2 - (A * Real.sin (k * y)) ^ 2 = A^2 * (Real.sin (k * x) ^ 2 - Real.sin (k * y) ^ 2) := by ring
-          rw [this]
-          have : (A * Real.sin (k * (x + y))) * (A * Real.sin (k * (x - y))) = A^2 * (Real.sin (k * (x + y)) * Real.sin (k * (x - y))) := by ring
-          rw [this]
-          have : Real.sin (k * (x + y)) * Real.sin (k * (x - y)) = Real.sin (k * x + k * y) * Real.sin (k * x - k * y) := by ring
-          rw [this]
-          rw [Real.sin_add]
-          rw [Real.sin_sub]
-          ring
-  -- (⇐)
-  · intro h
-    have hcd : ContDiff ℝ 2 f := h.1
-    have hfe : ∀ x y : ℝ, (f x) ^ 2 - (f y) ^ 2 = f (x + y) * f (x - y) := h.2
+  have h1: (convexHull ℝ S).Nonempty := by
+      apply convexHull_nonempty
+      exact hfinite.toFinite.nonempty
 
-    --substituting y = 0
-    have hfe_y0 : ∀ x : ℝ, (f x) ^ 2 - (f 0) ^ 2 = f (x) * f (x) := by
-      intro x
-      specialize hfe x 0
-      simp [hfe]
+  --cases' (convexHull ℝ S).eq_empty with hempty hnonempty
+  · -- Impossible case as the set S of 5 elements exists
+    sorry
 
-    --claim f(0) = 0 or f(x) = 0
-    have hclaim : f 0 = 0 ∨ (∀ x : ℝ, f x = 0) := by
-      by_cases hf0 : f 0 = 0
-      · left
-        exact hf0
-      · right
-        intro x
-        have hx : (f x)^2 - (f 0)^2 = f x * f x := hfe_y0 x
-        have : f 0 ≠ 0 := hf0
-        have : (f x)^2 - (f 0)^2 = (f x)^2 := by simp [pow_two, mul_eq_zero]
-        rw [this] at hx
-        have : (f x)^2 = (f x)^2 := by simp
-        rw [this] at hx
-        simp at hx
-        exact hx
-    --cases f(0) = 0
-    cases hclaim
-    case inl hf0 =>
-      have hfe_y0' : ∀ x : ℝ, (f x) ^ 2 = f (x) * f (x) := by
-        intro x
-        specialize hfe_y0 x
-        simp [hf0] at hfe_y0
-        exact hfe_y0
-      have hfe_0y : ∀ y : ℝ, (f 0) ^ 2 - (f y) ^ 2 = f (0 + y) * f (0 - y) := by
-        intro y
-        specialize hfe 0 y
-        exact hfe
-      have hfe_0y' : ∀ y : ℝ, -(f y) ^ 2 = f (y) * f (-y) := by
-        intro y
-        specialize hfe_0y y
-        simp [hf0] at hfe_0y
-        exact hfe_0y
+  let C := convexHull ℝ S
 
-      have hfe_x0 : ∀ x : ℝ, (f x) ^ 2 - (f 0) ^ 2 = f (x + 0) * f (x - 0) := by
-        intro x
-        specialize hfe x 0
-        exact hfe
-      have hfe_x0' : ∀ x : ℝ, (f x) ^ 2 = (f x)^2 := by
-        intro x
-        specialize hfe_x0 x
-        simp [hf0] at hfe_x0
-        exact hfe_x0
-      -- Differentiation wrt x
-      have hderiv : ∀ x y : ℝ, 2 * f x * deriv f x = deriv f (x+y) * f (x-y) + f (x+y) * deriv f (x-y) := by
-        intro x y
-        let g : ℝ → ℝ := fun x => (f x) ^ 2 - (f y) ^ 2
-        let h : ℝ → ℝ := fun x => f (x + y) * f (x - y)
-        have hg' : deriv g x = 2 * f x * deriv f x := by
-          have h1 : DifferentiableAt ℝ g x := by
-            apply DifferentiableAt.sub
-            · apply DifferentiableAt.pow
-              · exact (hcd.differentiable ℝ).differentiableAt
-              · norm_num
-            · apply DifferentiableAt.const
-          exact deriv_pow' (f x) 2 (hcd.differentiable ℝ).differentiableAt
-        have hh' : deriv h x = deriv f (x+y) * f (x-y) + f (x+y) * deriv f (x-y) := by
-          have h1 : DifferentiableAt ℝ h x := by
-            apply DifferentiableAt.mul
-            · apply DifferentiableAt.comp
-              · exact (hcd.differentiable ℝ).differentiableAt
-              · apply DifferentiableAt.add (DifferentiableAt.const y) (DifferentiableAt.id x)
-            · apply DifferentiableAt.comp
-              · exact (hcd.differentiable ℝ).differentiableAt
-              · apply DifferentiableAt.sub (DifferentiableAt.id x) (DifferentiableAt.const y)
-          apply deriv_mul' (f (x+y)) (f (x-y)) ((hcd.differentiable ℝ).differentiableAt.comp (DifferentiableAt.add (DifferentiableAt.id x) (DifferentiableAt.const y))) ((hcd.differentiable ℝ).differentiableAt.comp (DifferentiableAt.sub (DifferentiableAt.id x) (DifferentiableAt.const y)))
-        specialize hfe x y
-        have hdiff : deriv g x = deriv h x := by
-          apply deriv_congr
-          · ext z
-            exact hfe
-        rw [hg', hh'] at hdiff
-        exact hdiff
+  -- Consider the number of vertices of the convex hull. It can be 3, 4 or 5.
+  have card_C_le : Nat.card C ≤ 5 := by
+    apply Nat.card_le_of_subset
+    exact convexHull_subset S
 
-      --substitute x = 0
-      have hderiv_x0 : ∀ y : ℝ, 2 * f 0 * deriv f 0 = deriv f (0+y) * f (0-y) + f (0+y) * deriv f (0-y) := by
-        intro y
-        specialize hderiv 0 y
-        exact hderiv
-      have hderiv_x0' : ∀ y : ℝ, 0 = deriv f (y) * f (-y) + f (y) * deriv f (-y) := by
-        intro y
-        specialize hderiv_x0 y
-        simp [hf0] at hderiv_x0
-        exact hderiv_x0
+  cases Nat.card_eq_or_lt C with hC_eq hC_lt
 
-      -- f(x) = A*x or f(x) = A*sin(k*x) or f(x) = A*sinh(k*x)
-      sorry -- This is where the hard part of the proof would go.
-    case inr hfx0 =>
-      -- f(x) = 0
-      left
-      use 0
-      use 0
-      intro u
-      simp
+  -- Case 1: convexHull ℝ S has 5 vertices
+  · cases' hC_eq with n hC_eq'
+    cases n
+    case zero =>
+      rw [Nat.card_eq_zero] at hC_eq'
+      have hSempty : S = ∅ := by
+        apply convexHull_eq_empty_iff.mp hC_eq'
+      rw [hSempty] at hS
+      simp at hS
+    case succ n =>
+      cases n
+      case zero =>
+        rw [Nat.card_eq_one] at hC_eq'
+        sorry
+      case succ n =>
+        cases n
+        case zero =>
+          rw [Nat.card_eq_two] at hC_eq'
+          sorry
+        case succ n =>
+          cases n
+          case zero =>
+            rw [Nat.card_eq_three] at hC_eq'
+            sorry
+          case succ n =>
+            cases n
+            case zero =>
+              rw [Nat.card_eq_four] at hC_eq'
+              sorry
+            case succ n =>
+              cases n
+              case zero =>
+                rw [Nat.card_eq_five] at hC_eq'
+                -- Take any 4 points of the set
+                have hcard4 : Nat.card {0,1,2,3} = 4 := by simp
+                --have hsubset : {0,1,2,3} ⊆ Fin 5 := by sorry -- Proof needed
 
+                --let T := {S.val 0, S.val 1, S.val 2, S.val 3}
+
+                --have hTsubsetS : T ⊆ S := by sorry -- Requires theorems on Set.image.
+                -- Prove that T is a convex quad based on its construction,
+                -- and the assumption hnoncol that no 3 points are collinear.
+                --have hTConvexQuad : IsConvexQuadrilateral T := by sorry
+
+                --use T
+                --exact hTConvexQuad
+                sorry
+              case succ n =>
+                sorry
+
+  · -- Case 2: The number of points in C is less than 5
+    sorry -- Implement the case analysis described in the strategy.

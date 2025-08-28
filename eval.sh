@@ -2,9 +2,14 @@
 cd ~/Documents/GitHub/Putnam-Bench-tests
 if [ "$1" = "light" ]; then
     dir="src_light"
+elif [ "$1" = "vlight" ]; then
+    dir="src_vlight"
+elif [ "$1" = "ulight" ];then
+    dir="src_ulight"
 else
     dir="src"
 fi
+
 
 # Create an array of filenames
 mapfile -t files < <(find "$dir" -maxdepth 1 -type f -printf "%f\n")
@@ -31,4 +36,6 @@ for name in "${files[@]}"; do
         let wrong=wrong+1
     fi
 done
+echo "wrong: $wrong"
+echo "correct: $correct"
 
