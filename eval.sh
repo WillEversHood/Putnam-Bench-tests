@@ -12,6 +12,7 @@ mapfile -t files < <(find "$dir" -maxdepth 1 -type f -printf "%f\n")
 
 correct=0
 wrong=0
+echo "number of files: ${#files[@]}"
 for name in "${files[@]}"; do
     cd ~/Documents/GitHub/Putnam-Bench-tests
     lean_code=$(python3 eval.py $name)
