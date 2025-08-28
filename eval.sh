@@ -1,7 +1,10 @@
 #!/bin/bash
 cd ~/Documents/GitHub/Putnam-Bench-tests
-# Directory to scan
-dir="src"
+if [ "$1" = "light" ]; then
+    dir="src_light"
+else
+    dir="src"
+fi
 
 # Create an array of filenames
 mapfile -t files < <(find "$dir" -maxdepth 1 -type f -printf "%f\n")
